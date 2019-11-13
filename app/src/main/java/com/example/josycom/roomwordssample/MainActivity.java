@@ -4,14 +4,14 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,6 +37,23 @@ public class MainActivity extends AppCompatActivity {
         final WordListAdapter adapter = new WordListAdapter(this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        ItemTouchHelper helper = new ItemTouchHelper(
+                new ItemTouchHelper.SimpleCallback(0,
+                        ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                Word myWord = adapter.getWordAtPosition(position);
+                Toast.makeText(MainActivity.this, myWord.getWord() + " deleted", Toast.LENGTH_LONG).show();
+                mWordViewModel.deleteWord(myWord);
+            }
+        });
+        helper.attachToRecyclerView(recyclerView);
 
         mWordViewModel = ViewModelProviders.of(this).get(WordViewModel.class);
         mWordViewModel.getAllWords().observe(this, new Observer<List<Word>>() {
@@ -70,7 +87,9 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_clear_data) {
+            Toast.makeText(this, "Clearing the data...", Toast.LENGTH_SHORT).show();
+            mWordViewModel.deleteAll();
             return true;
         }
 
